@@ -19,7 +19,7 @@ namespace ContinuousWeb.Controllers
         {
             //throw new NotImplementedException();
 
-            ViewData["Message"] = "Your application description page.";
+            ViewData["Message"] = "Your application description page - Author.";
 
             return View();
         }

@@ -214,36 +214,42 @@ export async function scanKalshiMoneyOpportunities(
     return cached.result;
   }
 
-  const markets = await fetchOpenMarkets(maxMarkets);
-  const opportunities = rankMoneyOpportunities(markets, {
-    minProbability,
-    maxAsk,
-    minVolume24h,
-    limit,
-    query: query ?? undefined,
-  });
-
-  const result: ScanResult = {
-    scannedAt: new Date().toISOString(),
-    marketsScanned: markets.length,
-    opportunityCount: opportunities.length,
-    opportunities,
-    params: {
+  try {
+    const markets = await fetchOpenMarkets(maxMarkets);
+    const opportunities = rankMoneyOpportunities(markets, {
       minProbability,
       maxAsk,
       minVolume24h,
-      maxMarkets,
       limit,
-      query,
-    },
-  };
+      query: query ?? undefined,
+    });
 
-  scanCache.set(cacheKey, {
-    expiresAt: Date.now() + CACHE_TTL_MS,
-    result,
-  });
+    const result: ScanResult = {
+      scannedAt: new Date().toISOString(),
+      marketsScanned: markets.length,
+      opportunityCount: opportunities.length,
+      opportunities,
+      params: {
+        minProbability,
+        maxAsk,
+        minVolume24h,
+        maxMarkets,
+        limit,
+        query,
+      },
+    };
 
-  return result;
+    scanCache.set(cacheKey, {
+      expiresAt: Date.now() + CACHE_TTL_MS,
+      result,
+    });
+
+    return result;
+  } catch (error) {
+    // Prefer a slightly stale successful scan over failing the monitor.
+    if (cached) return cached.result;
+    throw error;
+  }
 }
 
 export function formatOpportunityLine(opp: MoneyOpportunity): string {

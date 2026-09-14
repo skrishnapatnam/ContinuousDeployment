@@ -21,7 +21,11 @@ export function OpportunitiesDashboard() {
       });
       const data = await response.json();
       if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}`);
+        throw new Error(
+          typeof data.error === "string"
+            ? data.error
+            : data.error?.message || `HTTP ${response.status}`,
+        );
       }
       setResult(data as ScanResult);
     } catch (err) {

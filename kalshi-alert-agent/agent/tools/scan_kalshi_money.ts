@@ -75,7 +75,7 @@ export default defineTool({
       .min(200)
       .max(10000)
       .optional()
-      .describe("Max open markets to page through (default 4000)."),
+      .describe("Max open markets to page through (default 2000)."),
     query: z
       .string()
       .optional()

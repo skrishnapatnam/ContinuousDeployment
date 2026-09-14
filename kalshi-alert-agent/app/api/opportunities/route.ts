@@ -12,7 +12,7 @@ export async function GET(request: Request) {
   const maxAsk = numberParam(searchParams.get("maxAsk"), 0.97);
   const minVolume24h = numberParam(searchParams.get("minVolume24h"), 25);
   const limit = numberParam(searchParams.get("limit"), 15);
-  const maxMarkets = numberParam(searchParams.get("maxMarkets"), 4000);
+  const maxMarkets = numberParam(searchParams.get("maxMarkets"), 2000);
   const query = searchParams.get("query") ?? undefined;
 
   try {

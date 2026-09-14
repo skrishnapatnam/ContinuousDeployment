@@ -55,7 +55,7 @@ export type ScanOptions = {
   maxAsk?: number;
   /** Minimum 24h volume in contracts (default 25). */
   minVolume24h?: number;
-  /** Maximum markets to page through (default 4000). */
+  /** Maximum markets to page through (default 2000). */
   maxMarkets?: number;
   /** How many opportunities to return (default 15). */
   limit?: number;

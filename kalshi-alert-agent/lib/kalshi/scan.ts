@@ -10,10 +10,47 @@ const KALSHI_API_BASE =
   process.env.KALSHI_API_BASE ??
   "https://api.elections.kalshi.com/trade-api/v2";
 
+const CACHE_TTL_MS = Number(process.env.KALSHI_SCAN_CACHE_MS ?? 45_000);
+
+type CacheEntry = { expiresAt: number; result: ScanResult };
+const scanCache = new Map<string, CacheEntry>();
+
 function dollars(value: string | undefined | null): number {
   if (value == null || value === "") return 0;
   const n = Number(value);
   return Number.isFinite(n) ? n : 0;
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchKalshiJson(url: URL, attempt = 0): Promise<unknown> {
+  const response = await fetch(url, {
+    headers: {
+      Accept: "application/json",
+      "User-Agent": "kalshi-money-watch/1.0",
+    },
+    cache: "no-store",
+  });
+
+  if (response.status === 429 && attempt < 5) {
+    const retryAfter = Number(response.headers.get("retry-after"));
+    const waitMs = Number.isFinite(retryAfter)
+      ? retryAfter * 1000
+      : 500 * 2 ** attempt;
+    await sleep(waitMs);
+    return fetchKalshiJson(url, attempt + 1);
+  }
+
+  if (!response.ok) {
+    const body = await response.text().catch(() => "");
+    throw new Error(
+      `Kalshi markets request failed (${response.status}): ${body.slice(0, 240)}`,
+    );
+  }
+
+  return response.json();
 }
 
 function titleFor(market: KalshiMarket): string {
@@ -67,7 +104,7 @@ function opportunityFromSide(
 }
 
 export async function fetchOpenMarkets(
-  maxMarkets = 4000,
+  maxMarkets = 2000,
 ): Promise<KalshiMarket[]> {
   const markets: KalshiMarket[] = [];
   let cursor: string | undefined;
@@ -81,20 +118,7 @@ export async function fetchOpenMarkets(
     url.searchParams.set("mve_filter", "exclude");
     if (cursor) url.searchParams.set("cursor", cursor);
 
-    const response = await fetch(url, {
-      headers: { Accept: "application/json" },
-      // Fresh prices for continuous monitoring.
-      cache: "no-store",
-    });
-
-    if (!response.ok) {
-      const body = await response.text().catch(() => "");
-      throw new Error(
-        `Kalshi markets request failed (${response.status}): ${body.slice(0, 240)}`,
-      );
-    }
-
-    const data = (await response.json()) as {
+    const data = (await fetchKalshiJson(url)) as {
       markets?: KalshiMarket[];
       cursor?: string;
     };
@@ -103,6 +127,8 @@ export async function fetchOpenMarkets(
     markets.push(...batch);
     cursor = data.cursor || undefined;
     if (!cursor || batch.length === 0) break;
+    // Small pacing gap to stay under public rate limits while paging.
+    await sleep(75);
   }
 
   return markets;
@@ -171,9 +197,22 @@ export async function scanKalshiMoneyOpportunities(
   const minProbability = options.minProbability ?? 0.85;
   const maxAsk = options.maxAsk ?? 0.97;
   const minVolume24h = options.minVolume24h ?? 25;
-  const maxMarkets = options.maxMarkets ?? 4000;
+  const maxMarkets = options.maxMarkets ?? 2000;
   const limit = options.limit ?? 15;
   const query = options.query?.trim() || null;
+
+  const cacheKey = JSON.stringify({
+    minProbability,
+    maxAsk,
+    minVolume24h,
+    maxMarkets,
+    limit,
+    query,
+  });
+  const cached = scanCache.get(cacheKey);
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.result;
+  }
 
   const markets = await fetchOpenMarkets(maxMarkets);
   const opportunities = rankMoneyOpportunities(markets, {
@@ -184,7 +223,7 @@ export async function scanKalshiMoneyOpportunities(
     query: query ?? undefined,
   });
 
-  return {
+  const result: ScanResult = {
     scannedAt: new Date().toISOString(),
     marketsScanned: markets.length,
     opportunityCount: opportunities.length,
@@ -198,6 +237,13 @@ export async function scanKalshiMoneyOpportunities(
       query,
     },
   };
+
+  scanCache.set(cacheKey, {
+    expiresAt: Date.now() + CACHE_TTL_MS,
+    result,
+  });
+
+  return result;
 }
 
 export function formatOpportunityLine(opp: MoneyOpportunity): string {

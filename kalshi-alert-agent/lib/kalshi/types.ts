@@ -37,7 +37,7 @@ export type MoneyOpportunity = {
   marketProbabilityPct: number;
   /**
    * Historical win probability from series settlement history (0–100).
-   * This is the primary “99%” filter.
+   * Primary filter is strictly above the configured floor (default >75%).
    */
   historicalWinRatePct: number;
   historicalSamples: number;
@@ -60,11 +60,12 @@ export type ScanOptions = {
   /** Minimum profit÷cost. Default 2 → ask ≤ ~$0.333. */
   minRoiMultiple?: number;
   /**
-   * Minimum historical win rate (0–1). Default 0.99.
+   * Historical win-rate floor (0–1). Default 0.75.
+   * Opportunities must be strictly above this (e.g. >75%).
    * Computed from the series’ settled expiration history.
    */
   minHistoricalWinRate?: number;
-  /** Minimum settled history samples required (default 50). */
+  /** Minimum settled history samples required (default 30). */
   minHistoricalSamples?: number;
   minProbability?: number;
   maxAsk?: number;

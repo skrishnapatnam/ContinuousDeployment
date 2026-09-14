@@ -5,7 +5,7 @@ async function main() {
     limit: 15,
     maxMarkets: 3000,
     minRoiMultiple: 2,
-    minHistoricalWinRate: 0.99,
+    minHistoricalWinRate: 0.75,
     minHistoricalSamples: 30,
     minVolume24h: 10,
   });

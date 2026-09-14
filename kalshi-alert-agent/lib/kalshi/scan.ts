@@ -20,8 +20,8 @@ const CACHE_TTL_MS = Number(process.env.KALSHI_SCAN_CACHE_MS ?? 90_000);
 
 /** Default: profit must be at least 2× the ask/cost. */
 export const DEFAULT_MIN_ROI_MULTIPLE = 2;
-/** Default: require ≥99% historical win rate for that side. */
-export const DEFAULT_MIN_HISTORICAL_WIN_RATE = 0.99;
+/** Default: require historical win rate strictly above 75%. */
+export const DEFAULT_MIN_HISTORICAL_WIN_RATE = 0.75;
 /** Default minimum settled history samples. */
 export const DEFAULT_MIN_HISTORICAL_SAMPLES = 30;
 
@@ -132,7 +132,7 @@ async function fetchSeriesTitle(seriesTicker: string): Promise<string | null> {
   }
 }
 
-/** Score favors higher historical win rate, then market ask. */
+/** Score favors max profit multiple among sides that clear the history floor. */
 export function moneyScore(
   historicalWinRate: number,
   ask: number,
@@ -141,7 +141,8 @@ export function moneyScore(
   if (historicalWinRate <= 0 || ask <= 0 || ask >= 1 || profitIfWin <= 0) {
     return 0;
   }
-  return historicalWinRate ** 4 * ask * profitIfWin * 1000;
+  const roiMultiple = profitIfWin / ask;
+  return roiMultiple * 1000 * historicalWinRate;
 }
 
 type Candidate = {
@@ -306,7 +307,8 @@ function toOpportunity(
 
 /**
  * Rank ≥2× candidates after attaching series settlement history.
- * Only keeps sides whose historical win rate is ≥ minHistoricalWinRate.
+ * Only keeps sides whose historical win rate is strictly above
+ * minHistoricalWinRate (default >75%), then sorts by max multiplier.
  */
 export async function rankMoneyOpportunitiesWithHistory(
   markets: KalshiMarket[],
@@ -350,7 +352,8 @@ export async function rankMoneyOpportunitiesWithHistory(
     );
 
     if (estimate.samples < params.minHistoricalSamples) continue;
-    if (estimate.winRate + 1e-12 < params.minHistoricalWinRate) continue;
+    // "more than 75%" → strictly greater than the configured floor
+    if (estimate.winRate <= params.minHistoricalWinRate) continue;
 
     opportunities.push(
       toOpportunity(candidate, estimate, seriesTitles.get(seriesTicker)),
@@ -358,10 +361,10 @@ export async function rankMoneyOpportunitiesWithHistory(
   }
 
   opportunities.sort((a, b) => {
+    if (b.roiMultiple !== a.roiMultiple) return b.roiMultiple - a.roiMultiple;
     if (b.historicalWinRatePct !== a.historicalWinRatePct) {
       return b.historicalWinRatePct - a.historicalWinRatePct;
     }
-    if (b.roiMultiple !== a.roiMultiple) return b.roiMultiple - a.roiMultiple;
     if (b.historicalSamples !== a.historicalSamples) {
       return b.historicalSamples - a.historicalSamples;
     }
@@ -393,10 +396,11 @@ export function rankMoneyOpportunities(
     });
 
   opportunities.sort((a, b) => {
+    if (b.roiMultiple !== a.roiMultiple) return b.roiMultiple - a.roiMultiple;
     if (b.marketProbabilityPct !== a.marketProbabilityPct) {
       return b.marketProbabilityPct - a.marketProbabilityPct;
     }
-    return b.roiMultiple - a.roiMultiple;
+    return b.volume24h - a.volume24h;
   });
 
   return opportunities.slice(0, params.limit);
@@ -462,7 +466,7 @@ export function formatScanAlert(result: ScanResult): string {
     return (
       `Kalshi money scan @ ${result.scannedAt}: no opportunities ` +
       `(scanned ${result.marketsScanned} markets; ` +
-      `need ≥${minRoiMultiple}× profit and ≥${(minHistoricalWinRate * 100).toFixed(0)}% ` +
+      `need ≥${minRoiMultiple}× profit and >${(minHistoricalWinRate * 100).toFixed(0)}% ` +
       `historical win rate over ≥${minHistoricalSamples} settlements; ` +
       `ask ≤ ${maxAsk.toFixed(3)}, min vol ${minVolume24h}).`
     );
@@ -470,19 +474,19 @@ export function formatScanAlert(result: ScanResult): string {
 
   const top = result.opportunities[0];
   return [
-    `## Kalshi money alerts (≥${minRoiMultiple}× profit, ≥${(minHistoricalWinRate * 100).toFixed(0)}% history)`,
+    `## Kalshi money alerts (max multiplier, >${(minHistoricalWinRate * 100).toFixed(0)}% history, ≥${minRoiMultiple}×)`,
     ``,
     `Scanned **${result.marketsScanned}** open markets at \`${result.scannedAt}\`.`,
-    `Top pick: **${top.historicalWinRatePct}% historical ${top.side}** on ${top.title} — ` +
-      `pay $${top.ask.toFixed(2)} to make $${top.profitIfWin.toFixed(2)} ` +
-      `(${top.roiMultiple.toFixed(2)}×) based on ${top.historicalSamples} past settlements.`,
+    `Top pick by multiplier: **${top.roiMultiple.toFixed(2)}×** on ${top.title} — ` +
+      `${top.side} @ $${top.ask.toFixed(2)} ` +
+      `(${top.historicalWinRatePct}% hist over ${top.historicalSamples} settlements).`,
     ``,
-    `### Ranked opportunities`,
+    `### Ranked by max multiplier`,
     ...result.opportunities.map(formatOpportunityLine),
     ``,
     `_Filters: profit ≥ ${minRoiMultiple}× cost (ask ≤ ${maxAsk.toFixed(3)}), ` +
-      `historical win rate ≥ ${(minHistoricalWinRate * 100).toFixed(0)}% ` +
-      `(≥${minHistoricalSamples} samples), min 24h volume ${minVolume24h}. ` +
+      `historical win rate > ${(minHistoricalWinRate * 100).toFixed(0)}% ` +
+      `(≥${minHistoricalSamples} samples), ranked by highest multiplier. ` +
       `Not financial advice._`,
   ].join("\n");
 }

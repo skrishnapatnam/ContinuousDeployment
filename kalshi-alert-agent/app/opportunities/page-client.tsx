@@ -17,7 +17,7 @@ export function OpportunitiesDashboard() {
     try {
       setError(null);
       const response = await fetch(
-        "/api/opportunities?limit=20&minRoiMultiple=2&minHistoricalWinRate=0.99",
+        "/api/opportunities?limit=20&minRoiMultiple=2&minHistoricalWinRate=0.75",
         { cache: "no-store" },
       );
       const data = await response.json();
@@ -53,11 +53,11 @@ export function OpportunitiesDashboard() {
       <header className="kmw-header">
         <div>
           <p className="kmw-brand">Kalshi Money Watch</p>
-          <h1>≥99% historical chance of ≥2× profit</h1>
+          <h1>Max multiplier with &gt;75% historical chance</h1>
           <p className="kmw-lede">
             Live Kalshi scan: sides with ask ≤ ~$0.33 (≥2× payout){" "}
-            <strong>and</strong> ≥99% win rate from that series’ settled
-            history.
+            <strong>and</strong> &gt;75% win rate from that series’ settled
+            history, ranked by highest profit multiple.
           </p>
         </div>
         <div className="kmw-actions">
@@ -91,8 +91,10 @@ export function OpportunitiesDashboard() {
           {" · "}
           ≥{result.params.minRoiMultiple}× profit
           {" · "}
-          ≥{(result.params.minHistoricalWinRate * 100).toFixed(0)}% history (n≥
-          {result.params.minHistoricalSamples})
+          &gt;{(result.params.minHistoricalWinRate * 100).toFixed(0)}% history
+          (n≥{result.params.minHistoricalSamples})
+          {" · "}
+          ranked by max multiple
           {" · "}
           ask ≤ {result.params.maxAsk.toFixed(3)}
         </p>
@@ -102,12 +104,12 @@ export function OpportunitiesDashboard() {
         <table>
           <thead>
             <tr>
+              <th>Multiple</th>
               <th>Hist %</th>
               <th>n</th>
               <th>Side</th>
               <th>Ask</th>
               <th>Profit</th>
-              <th>Multiple</th>
               <th>Mkt %</th>
               <th>Vol 24h</th>
               <th>Market</th>
@@ -116,6 +118,7 @@ export function OpportunitiesDashboard() {
           <tbody>
             {result?.opportunities.map((opp) => (
               <tr key={`${opp.ticker}-${opp.side}`}>
+                <td className="kmw-multiple">{opp.roiMultiple.toFixed(2)}×</td>
                 <td className="kmw-prob">
                   {opp.historicalWinRatePct.toFixed(1)}%
                 </td>
@@ -129,7 +132,6 @@ export function OpportunitiesDashboard() {
                 </td>
                 <td>${opp.ask.toFixed(2)}</td>
                 <td className="kmw-profit">+${opp.profitIfWin.toFixed(2)}</td>
-                <td className="kmw-multiple">{opp.roiMultiple.toFixed(2)}×</td>
                 <td>{opp.marketProbabilityPct.toFixed(1)}%</td>
                 <td>{Math.round(opp.volume24h).toLocaleString()}</td>
                 <td>
@@ -145,8 +147,8 @@ export function OpportunitiesDashboard() {
             {result && result.opportunities.length === 0 ? (
               <tr>
                 <td colSpan={9}>
-                  No sides currently clear ≥2× profit with ≥99% historical win
-                  rate.
+                  No sides currently clear ≥2× profit with &gt;75% historical
+                  win rate.
                 </td>
               </tr>
             ) : null}

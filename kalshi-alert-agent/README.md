@@ -1,13 +1,14 @@
 # Kalshi Money Watch
 
-Continuous Kalshi monitor for sides with **≥2× profit** whose **series history** shows a **≥99%** empirical win rate.
+Continuous Kalshi monitor for sides with **≥2× profit** whose **series history** shows a **>75%** empirical win rate, ranked by **maximum profit multiple**.
 
 ## Filters
 
 | Rule | Default |
 | --- | --- |
 | Min profit multiple | `2` (ask ≤ ~$0.33) |
-| Min historical win rate | `99%` from settled expiration values |
+| Historical win rate | `>75%` from settled expiration values |
+| Ranking | Highest multiplier first |
 | Min history samples | `30` |
 | Min 24h volume | `10` |
 | Markets scanned | `3000` |

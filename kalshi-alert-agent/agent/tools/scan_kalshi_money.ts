@@ -57,7 +57,7 @@ const outputSchema = z.object({
 
 export default defineTool({
   description:
-    "Scan open Kalshi markets for sides with ≥2× profit (ask ≤ ~$0.33) whose series settlement history shows ≥99% win rate for that side/strike. Uses past expiration values. For continuous monitoring and money alerts.",
+    "Scan open Kalshi markets for sides with ≥2× profit (ask ≤ ~$0.33) whose series settlement history shows >75% win rate for that side/strike. Ranks by maximum profit multiple. Uses past expiration values. For continuous monitoring and money alerts.",
   inputSchema: z.object({
     minRoiMultiple: z
       .number()
@@ -73,7 +73,7 @@ export default defineTool({
       .max(1)
       .optional()
       .describe(
-        `Minimum historical win rate 0–1 (default ${DEFAULT_MIN_HISTORICAL_WIN_RATE}).`,
+        `Historical win-rate floor 0–1; keep sides strictly above this (default ${DEFAULT_MIN_HISTORICAL_WIN_RATE} → >75%).`,
       ),
     minHistoricalSamples: z
       .number()
@@ -92,9 +92,9 @@ export default defineTool({
   }),
   outputSchema,
   label: {
-    start: () => "Scanning Kalshi for ≥99% hist / ≥2× profit sides",
+    start: () => "Scanning Kalshi for max multiplier / >75% hist sides",
     complete: (_input, output) =>
-      `Found ${output.opportunityCount} ≥99% hist / ≥2× opportunities`,
+      `Found ${output.opportunityCount} max-multiplier / >75% hist opportunities`,
   },
   async execute(input) {
     const result = await scanKalshiMoneyOpportunities(input);

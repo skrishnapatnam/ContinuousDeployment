@@ -73,4 +73,4 @@ assert.ok(yes90.winRate < 0.2, `expected YES>90 low, got ${yes90.winRate}`);
 const no90 = estimateHistoricalWinRate(markets[1], "NO", history);
 assert.ok(no90.winRate >= 0.99, `expected NO>90 high, got ${no90.winRate}`);
 
-console.log("kalshi ≥2× + history ranking tests passed");
+console.log("kalshi ≥2× + >75% history ranking tests passed");

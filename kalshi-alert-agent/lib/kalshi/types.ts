@@ -6,8 +6,12 @@ export type KalshiMarket = {
   yes_sub_title?: string;
   no_sub_title?: string;
   status?: string;
+  result?: string;
   close_time?: string;
   expiration_time?: string;
+  expiration_value?: string;
+  floor_strike?: number | string;
+  strike_type?: string;
   last_price_dollars?: string;
   yes_bid_dollars?: string;
   yes_ask_dollars?: string;
@@ -28,7 +32,17 @@ export type MoneyOpportunity = {
   side: MoneySide;
   ask: number;
   bid: number;
-  probabilityPct: number;
+  /** Market-implied probability from ask (0–100). */
+  marketProbabilityPct: number;
+  /**
+   * Historical win probability from series settlement history (0–100).
+   * This is the primary “99%” filter.
+   */
+  historicalWinRatePct: number;
+  historicalSamples: number;
+  historicalWins: number;
+  historicalMethod: "expiration_value" | "series_result" | "insufficient";
+  seriesTicker: string;
   profitIfWin: number;
   /** Profit ÷ ask (2 = 2× profit on cost). */
   roiMultiple: number;
@@ -44,6 +58,13 @@ export type MoneyOpportunity = {
 export type ScanOptions = {
   /** Minimum profit÷cost. Default 2 → ask ≤ ~$0.333. */
   minRoiMultiple?: number;
+  /**
+   * Minimum historical win rate (0–1). Default 0.99.
+   * Computed from the series’ settled expiration history.
+   */
+  minHistoricalWinRate?: number;
+  /** Minimum settled history samples required (default 50). */
+  minHistoricalSamples?: number;
   minProbability?: number;
   maxAsk?: number;
   minVolume24h?: number;
@@ -61,6 +82,8 @@ export type ScanResult = {
     Pick<
       ScanOptions,
       | "minRoiMultiple"
+      | "minHistoricalWinRate"
+      | "minHistoricalSamples"
       | "minProbability"
       | "maxAsk"
       | "minVolume24h"

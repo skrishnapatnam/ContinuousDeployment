@@ -17,7 +17,7 @@ export function OpportunitiesDashboard() {
     try {
       setError(null);
       const response = await fetch(
-        "/api/opportunities?limit=20&minRoiMultiple=2",
+        "/api/opportunities?limit=20&minRoiMultiple=2&minHistoricalWinRate=0.99",
         { cache: "no-store" },
       );
       const data = await response.json();
@@ -53,11 +53,11 @@ export function OpportunitiesDashboard() {
       <header className="kmw-header">
         <div>
           <p className="kmw-brand">Kalshi Money Watch</p>
-          <h1>Highest probability with ≥2× profit</h1>
+          <h1>≥99% historical chance of ≥2× profit</h1>
           <p className="kmw-lede">
-            Live Kalshi scan for sides where profit if you win is at least{" "}
-            <strong>2× what you paid</strong> (ask ≤ ~$0.33), ranked by win
-            probability.
+            Live Kalshi scan: sides with ask ≤ ~$0.33 (≥2× payout){" "}
+            <strong>and</strong> ≥99% win rate from that series’ settled
+            history.
           </p>
         </div>
         <div className="kmw-actions">
@@ -91,6 +91,9 @@ export function OpportunitiesDashboard() {
           {" · "}
           ≥{result.params.minRoiMultiple}× profit
           {" · "}
+          ≥{(result.params.minHistoricalWinRate * 100).toFixed(0)}% history (n≥
+          {result.params.minHistoricalSamples})
+          {" · "}
           ask ≤ {result.params.maxAsk.toFixed(3)}
         </p>
       ) : null}
@@ -99,12 +102,13 @@ export function OpportunitiesDashboard() {
         <table>
           <thead>
             <tr>
-              <th>Prob</th>
+              <th>Hist %</th>
+              <th>n</th>
               <th>Side</th>
               <th>Ask</th>
-              <th>Profit if win</th>
+              <th>Profit</th>
               <th>Multiple</th>
-              <th>ROI</th>
+              <th>Mkt %</th>
               <th>Vol 24h</th>
               <th>Market</th>
             </tr>
@@ -112,7 +116,10 @@ export function OpportunitiesDashboard() {
           <tbody>
             {result?.opportunities.map((opp) => (
               <tr key={`${opp.ticker}-${opp.side}`}>
-                <td className="kmw-prob">{opp.probabilityPct.toFixed(1)}%</td>
+                <td className="kmw-prob">
+                  {opp.historicalWinRatePct.toFixed(1)}%
+                </td>
+                <td>{opp.historicalSamples}</td>
                 <td>
                   <span
                     className={`kmw-side kmw-side-${opp.side.toLowerCase()}`}
@@ -123,26 +130,29 @@ export function OpportunitiesDashboard() {
                 <td>${opp.ask.toFixed(2)}</td>
                 <td className="kmw-profit">+${opp.profitIfWin.toFixed(2)}</td>
                 <td className="kmw-multiple">{opp.roiMultiple.toFixed(2)}×</td>
-                <td>{opp.roiPct.toFixed(0)}%</td>
+                <td>{opp.marketProbabilityPct.toFixed(1)}%</td>
                 <td>{Math.round(opp.volume24h).toLocaleString()}</td>
                 <td>
                   <a href={opp.kalshiUrl} target="_blank" rel="noreferrer">
                     {opp.title}
                   </a>
-                  <div className="kmw-ticker">{opp.ticker}</div>
+                  <div className="kmw-ticker">
+                    {opp.seriesTicker} · {opp.ticker}
+                  </div>
                 </td>
               </tr>
             ))}
             {result && result.opportunities.length === 0 ? (
               <tr>
-                <td colSpan={8}>
-                  No opportunities with ≥2× profit matched the current filters.
+                <td colSpan={9}>
+                  No sides currently clear ≥2× profit with ≥99% historical win
+                  rate.
                 </td>
               </tr>
             ) : null}
             {!result && !error ? (
               <tr>
-                <td colSpan={8}>Scanning Kalshi…</td>
+                <td colSpan={9}>Scanning Kalshi + settlement history…</td>
               </tr>
             ) : null}
           </tbody>
@@ -150,9 +160,9 @@ export function OpportunitiesDashboard() {
       </div>
 
       <p className="kmw-disclaimer">
-        ≥2× means profit ÷ ask ≥ 2 (e.g. buy at $0.30 → +$0.70 profit).
-        Market-implied probabilities are not guarantees. This tool does not place
-        trades and is not financial advice.
+        Hist % is the empirical win rate of this side/strike from past
+        settlements in the same series (expiration values). ≥2× means profit ÷
+        ask ≥ 2. Past performance is not a guarantee. Not financial advice.
       </p>
     </div>
   );

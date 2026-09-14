@@ -13,7 +13,7 @@
     "eval": "eve eval",
     "start": "next start",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test:kalshi": "node --experimental-strip-types scripts/test-ranking.ts",
+    "test:kalshi": "npx --yes tsx scripts/test-ranking.ts",
     "build:eve": "eve build",
     "dev:eve": "eve dev",
     "start:eve": "eve start"

@@ -1,22 +1,18 @@
 # Kalshi Money Watch
 
-Continuous Kalshi monitor that alerts on the **highest-probability contracts with ≥2× profit** — buy ask `p` only when profit `(1−p)` is at least **2×** the cost `p` (ask ≤ ~$0.33), then rank by win probability.
+Continuous Kalshi monitor for sides with **≥2× profit** whose **series history** shows a **≥99%** empirical win rate.
 
-Built as an [eve](https://eve.dev) agent with a Next.js dashboard.
+## Filters
 
-## What it does
+| Rule | Default |
+| --- | --- |
+| Min profit multiple | `2` (ask ≤ ~$0.33) |
+| Min historical win rate | `99%` from settled expiration values |
+| Min history samples | `30` |
+| Min 24h volume | `10` |
+| Markets scanned | `3000` |
 
-1. Pages open Kalshi markets (public API, no auth).
-2. Keeps only sides where **profit ÷ ask ≥ 2** (default).
-3. Ranks those by **highest implied probability**.
-4. Alerts on a **5-minute cron** schedule and via chat.
-5. Serves a live board at `/opportunities` (auto-refreshes every 60s).
-
-This agent is **read-only**. It does not place trades.
-
-## Quick start
-
-Requires Node.js 24+.
+## Run
 
 ```bash
 cd kalshi-alert-agent
@@ -26,15 +22,6 @@ npm run dev
 
 Open [http://localhost:3000/opportunities](http://localhost:3000/opportunities).
 
-## Ranking defaults
-
-| Filter | Default |
-| --- | --- |
-| Min profit multiple | `2` (profit ≥ 2× cost) |
-| Max ask | `≈0.333` (derived) |
-| Min 24h volume | `25` contracts |
-| Multivariate markets | excluded |
-
 ## Disclaimer
 
-Market-implied probabilities are not guarantees. This is monitoring only — **not financial advice**.
+Historical settlement rates are not guarantees. Monitoring only — not financial advice.

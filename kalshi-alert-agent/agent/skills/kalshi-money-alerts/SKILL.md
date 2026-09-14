@@ -1,41 +1,25 @@
 ---
-description: Ranking and alerting rules for Kalshi opportunities with ≥2× profit. Use when scanning markets, explaining ROI multiples, or formatting alerts.
+description: Ranking rules for Kalshi ≥2× profit sides with ≥99% historical win rate. Use when scanning, explaining history filters, or formatting alerts.
 ---
 
-# Kalshi ≥2× profit alerts
+# Kalshi ≥2× profit with ≥99% history
 
-## What “profit at least 2×” means
+## Filters (both required)
 
-On Kalshi, a contract settles at **$1** if that side wins and **$0** otherwise.
-Buying YES (or NO) at ask price **p** means:
-
-- Market-implied win probability ≈ **p**
-- Profit if it wins = **1 − p**
-- Profit multiple = **(1 − p) / p**
-
-We require **profit multiple ≥ 2** (ROI ≥ 200%), which means **p ≤ 1/3 ≈ $0.333**.
-Example: pay $0.30 → profit $0.70 = **2.33×**.
-
-Among those, rank by **highest probability** so you see the safest-looking ≥2× payouts first.
-
-## Default filters
-
-| Param | Default | Why |
-| --- | --- | --- |
-| `minRoiMultiple` | `2` | Profit must be ≥ 2× cost |
-| `maxAsk` | `≈0.333` | Derived from minRoiMultiple |
-| `minVolume24h` | `25` | Skip dead/illiquid books |
-| `mve_filter` | `exclude` | Skip multivariate combo noise |
+1. **Profit ≥ 2× cost** — buy ask `p` only if `(1 − p) / p ≥ 2` ⇒ `p ≤ ≈0.333`.
+2. **Historical win rate ≥ 99%** — from settled markets in the same series:
+   - Prefer numeric `expiration_value` history vs this market’s `floor_strike` / `strike_type`.
+   - Require enough samples (default ≥ 50).
+   - Fallback to series-wide YES/NO settlement frequency when strike math is unavailable.
 
 ## Ranking
 
-1. Sort by **probabilityPct** descending.
-2. Break ties with higher **roiMultiple**, then **moneyScore**, then 24h volume.
+1. Historical win rate (desc)
+2. ROI multiple
+3. Sample size / volume
 
 ## Alert format
 
-Lead with the single best opportunity, then a short ranked list with:
+`hist% SIDE @ $ask (+$profit, Nx; n=samples) — title [ticker](url)`
 
-`probability% SIDE @ $ask (+$profit if wins, Nx / ROI%) — title [ticker](url)`
-
-Never claim guaranteed profit. Never place orders from this skill.
+Never claim certainty. Never place orders.

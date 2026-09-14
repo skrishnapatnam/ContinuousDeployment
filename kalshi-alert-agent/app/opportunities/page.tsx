@@ -3,7 +3,7 @@ import { OpportunitiesDashboard } from "./page-client";
 export const metadata = {
   title: "Kalshi Money Watch",
   description:
-    "Highest-probability Kalshi contracts with ≥2× profit — live scanner.",
+    "Kalshi sides with ≥2× profit and ≥99% historical win rate — live scanner.",
 };
 
 export default function OpportunitiesPage() {

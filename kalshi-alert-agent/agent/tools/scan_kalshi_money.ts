@@ -2,6 +2,8 @@ import { defineTool } from "eve/tools";
 import { z } from "zod";
 
 import {
+  DEFAULT_MIN_HISTORICAL_SAMPLES,
+  DEFAULT_MIN_HISTORICAL_WIN_RATE,
   DEFAULT_MIN_ROI_MULTIPLE,
   formatScanAlert,
   scanKalshiMoneyOpportunities,
@@ -14,7 +16,16 @@ const opportunitySchema = z.object({
   side: z.enum(["YES", "NO"]),
   ask: z.number(),
   bid: z.number(),
-  probabilityPct: z.number(),
+  marketProbabilityPct: z.number(),
+  historicalWinRatePct: z.number(),
+  historicalSamples: z.number(),
+  historicalWins: z.number(),
+  historicalMethod: z.enum([
+    "expiration_value",
+    "series_result",
+    "insufficient",
+  ]),
+  seriesTicker: z.string(),
   profitIfWin: z.number(),
   roiMultiple: z.number(),
   roiPct: z.number(),
@@ -32,6 +43,8 @@ const outputSchema = z.object({
   opportunities: z.array(opportunitySchema),
   params: z.object({
     minRoiMultiple: z.number(),
+    minHistoricalWinRate: z.number(),
+    minHistoricalSamples: z.number(),
     minProbability: z.number(),
     maxAsk: z.number(),
     minVolume24h: z.number(),
@@ -44,7 +57,7 @@ const outputSchema = z.object({
 
 export default defineTool({
   description:
-    "Scan open Kalshi markets for the highest-probability contracts whose profit is at least 2× the cost (ROI ≥ 200%, ask ≤ ~$0.33). Use for continuous monitoring and money alerts.",
+    "Scan open Kalshi markets for sides with ≥2× profit (ask ≤ ~$0.33) whose series settlement history shows ≥99% win rate for that side/strike. Uses past expiration values. For continuous monitoring and money alerts.",
   inputSchema: z.object({
     minRoiMultiple: z
       .number()
@@ -52,48 +65,36 @@ export default defineTool({
       .max(50)
       .optional()
       .describe(
-        `Minimum profit÷cost multiple (default ${DEFAULT_MIN_ROI_MULTIPLE}).`,
+        `Minimum profit÷cost (default ${DEFAULT_MIN_ROI_MULTIPLE}).`,
       ),
-    minProbability: z
+    minHistoricalWinRate: z
       .number()
       .min(0)
-      .max(0.99)
-      .optional()
-      .describe("Optional minimum implied probability / ask (default 0)."),
-    maxAsk: z
-      .number()
-      .min(0.01)
-      .max(0.99)
+      .max(1)
       .optional()
       .describe(
-        "Optional max ask; never raised above 1/(1+minRoiMultiple).",
+        `Minimum historical win rate 0–1 (default ${DEFAULT_MIN_HISTORICAL_WIN_RATE}).`,
       ),
-    minVolume24h: z
-      .number()
-      .min(0)
-      .optional()
-      .describe("Minimum 24h volume in contracts (default 25)."),
-    limit: z
+    minHistoricalSamples: z
       .number()
       .int()
       .min(1)
-      .max(50)
       .optional()
-      .describe("How many opportunities to return (default 15)."),
-    maxMarkets: z
-      .number()
-      .int()
-      .min(200)
-      .max(10000)
-      .optional()
-      .describe("Max open markets to page through (default 2000)."),
-    query: z.string().optional().describe("Optional ticker/title filter."),
+      .describe(
+        `Minimum settled history samples (default ${DEFAULT_MIN_HISTORICAL_SAMPLES}).`,
+      ),
+    minProbability: z.number().min(0).max(0.99).optional(),
+    maxAsk: z.number().min(0.01).max(0.99).optional(),
+    minVolume24h: z.number().min(0).optional(),
+    limit: z.number().int().min(1).max(50).optional(),
+    maxMarkets: z.number().int().min(200).max(10000).optional(),
+    query: z.string().optional(),
   }),
   outputSchema,
   label: {
-    start: () => "Scanning Kalshi for ≥2× profit opportunities",
+    start: () => "Scanning Kalshi for ≥99% hist / ≥2× profit sides",
     complete: (_input, output) =>
-      `Found ${output.opportunityCount} ≥2× profit opportunities`,
+      `Found ${output.opportunityCount} ≥99% hist / ≥2× opportunities`,
   },
   async execute(input) {
     const result = await scanKalshiMoneyOpportunities(input);

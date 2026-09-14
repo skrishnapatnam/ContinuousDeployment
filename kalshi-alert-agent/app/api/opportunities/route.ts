@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 
-import { scanKalshiMoneyOpportunities } from "@/lib/kalshi";
+import {
+  DEFAULT_MIN_ROI_MULTIPLE,
+  scanKalshiMoneyOpportunities,
+} from "@/lib/kalshi";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -8,8 +11,16 @@ export const revalidate = 0;
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
 
-  const minProbability = numberParam(searchParams.get("minProbability"), 0.85);
-  const maxAsk = numberParam(searchParams.get("maxAsk"), 0.97);
+  const minRoiMultiple = numberParam(
+    searchParams.get("minRoiMultiple"),
+    DEFAULT_MIN_ROI_MULTIPLE,
+  );
+  const minProbability = numberParam(searchParams.get("minProbability"), 0);
+  const maxAskRaw = searchParams.get("maxAsk");
+  const maxAsk =
+    maxAskRaw == null || maxAskRaw === ""
+      ? undefined
+      : numberParam(maxAskRaw, Number.NaN);
   const minVolume24h = numberParam(searchParams.get("minVolume24h"), 25);
   const limit = numberParam(searchParams.get("limit"), 15);
   const maxMarkets = numberParam(searchParams.get("maxMarkets"), 2000);
@@ -17,8 +28,9 @@ export async function GET(request: Request) {
 
   try {
     const result = await scanKalshiMoneyOpportunities({
+      minRoiMultiple,
       minProbability,
-      maxAsk,
+      maxAsk: Number.isFinite(maxAsk) ? maxAsk : undefined,
       minVolume24h,
       limit,
       maxMarkets,

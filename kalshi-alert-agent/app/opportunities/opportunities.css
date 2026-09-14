@@ -145,6 +145,12 @@
   font-variant-numeric: tabular-nums;
 }
 
+.kmw-multiple {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--accent, #1b6b4a);
+}
+
 .kmw-side {
   display: inline-block;
   min-width: 2.6rem;

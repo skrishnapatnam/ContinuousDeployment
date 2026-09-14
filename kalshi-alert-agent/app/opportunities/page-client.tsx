@@ -16,9 +16,10 @@ export function OpportunitiesDashboard() {
     setLoading(true);
     try {
       setError(null);
-      const response = await fetch("/api/opportunities?limit=20", {
-        cache: "no-store",
-      });
+      const response = await fetch(
+        "/api/opportunities?limit=20&minRoiMultiple=2",
+        { cache: "no-store" },
+      );
       const data = await response.json();
       if (!response.ok) {
         throw new Error(
@@ -52,10 +53,11 @@ export function OpportunitiesDashboard() {
       <header className="kmw-header">
         <div>
           <p className="kmw-brand">Kalshi Money Watch</p>
-          <h1>Highest probability that still pays</h1>
+          <h1>Highest probability with ≥2× profit</h1>
           <p className="kmw-lede">
-            Live scan of open Kalshi markets for near-certain sides with leftover
-            payout below $1.
+            Live Kalshi scan for sides where profit if you win is at least{" "}
+            <strong>2× what you paid</strong> (ask ≤ ~$0.33), ranked by win
+            probability.
           </p>
         </div>
         <div className="kmw-actions">
@@ -87,7 +89,9 @@ export function OpportunitiesDashboard() {
           {" · "}
           {result.opportunityCount} opportunities
           {" · "}
-          ask {result.params.minProbability}–{result.params.maxAsk}
+          ≥{result.params.minRoiMultiple}× profit
+          {" · "}
+          ask ≤ {result.params.maxAsk.toFixed(3)}
         </p>
       ) : null}
 
@@ -99,6 +103,7 @@ export function OpportunitiesDashboard() {
               <th>Side</th>
               <th>Ask</th>
               <th>Profit if win</th>
+              <th>Multiple</th>
               <th>ROI</th>
               <th>Vol 24h</th>
               <th>Market</th>
@@ -109,13 +114,16 @@ export function OpportunitiesDashboard() {
               <tr key={`${opp.ticker}-${opp.side}`}>
                 <td className="kmw-prob">{opp.probabilityPct.toFixed(1)}%</td>
                 <td>
-                  <span className={`kmw-side kmw-side-${opp.side.toLowerCase()}`}>
+                  <span
+                    className={`kmw-side kmw-side-${opp.side.toLowerCase()}`}
+                  >
                     {opp.side}
                   </span>
                 </td>
                 <td>${opp.ask.toFixed(2)}</td>
                 <td className="kmw-profit">+${opp.profitIfWin.toFixed(2)}</td>
-                <td>{opp.roiPct.toFixed(1)}%</td>
+                <td className="kmw-multiple">{opp.roiMultiple.toFixed(2)}×</td>
+                <td>{opp.roiPct.toFixed(0)}%</td>
                 <td>{Math.round(opp.volume24h).toLocaleString()}</td>
                 <td>
                   <a href={opp.kalshiUrl} target="_blank" rel="noreferrer">
@@ -127,12 +135,14 @@ export function OpportunitiesDashboard() {
             ))}
             {result && result.opportunities.length === 0 ? (
               <tr>
-                <td colSpan={7}>No opportunities matched the current filters.</td>
+                <td colSpan={8}>
+                  No opportunities with ≥2× profit matched the current filters.
+                </td>
               </tr>
             ) : null}
             {!result && !error ? (
               <tr>
-                <td colSpan={7}>Scanning Kalshi…</td>
+                <td colSpan={8}>Scanning Kalshi…</td>
               </tr>
             ) : null}
           </tbody>
@@ -140,6 +150,7 @@ export function OpportunitiesDashboard() {
       </div>
 
       <p className="kmw-disclaimer">
+        ≥2× means profit ÷ ask ≥ 2 (e.g. buy at $0.30 → +$0.70 profit).
         Market-implied probabilities are not guarantees. This tool does not place
         trades and is not financial advice.
       </p>

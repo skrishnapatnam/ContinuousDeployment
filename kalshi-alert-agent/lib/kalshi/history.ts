@@ -141,6 +141,7 @@ function sideWinsOnValue(
   strikeType: string | null | undefined,
   floorStrike: number,
   value: number,
+  capStrike: number | null = null,
 ): boolean {
   const type = (strikeType || "greater").toLowerCase();
 
@@ -158,9 +159,17 @@ function sideWinsOnValue(
     case "less_or_equal":
       yesWins = value <= floorStrike;
       break;
+    case "between":
+      // Inclusive floor, exclusive cap is common for Kalshi temp brackets (e.g. 86–87).
+      if (capStrike == null || !Number.isFinite(capStrike)) {
+        yesWins = false;
+      } else {
+        yesWins = value >= floorStrike && value < capStrike;
+      }
+      break;
     default:
-      // Unknown strike math — treat as greater for binary thresholds.
-      yesWins = value > floorStrike;
+      // Unknown strike math — do not invent a win.
+      yesWins = false;
       break;
   }
 
@@ -179,6 +188,8 @@ export function estimateHistoricalWinRate(
   const seriesTicker = seriesTickerFromMarket(market);
   const floorStrike =
     market.floor_strike == null ? null : Number(market.floor_strike);
+  const capStrike =
+    market.cap_strike == null ? null : Number(market.cap_strike);
   const strikeType = market.strike_type ?? null;
 
   if (
@@ -189,7 +200,13 @@ export function estimateHistoricalWinRate(
     let wins = 0;
     for (const point of history) {
       if (
-        sideWinsOnValue(side, strikeType, floorStrike, point.expirationValue)
+        sideWinsOnValue(
+          side,
+          strikeType,
+          floorStrike,
+          point.expirationValue,
+          Number.isFinite(capStrike as number) ? (capStrike as number) : null,
+        )
       ) {
         wins += 1;
       }

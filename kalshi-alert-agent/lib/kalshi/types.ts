@@ -11,6 +11,7 @@ export type KalshiMarket = {
   expiration_time?: string;
   expiration_value?: string;
   floor_strike?: number | string;
+  cap_strike?: number | string;
   strike_type?: string;
   last_price_dollars?: string;
   yes_bid_dollars?: string;

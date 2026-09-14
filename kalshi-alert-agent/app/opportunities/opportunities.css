@@ -1,0 +1,189 @@
+@import url("https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap");
+
+.kmw-dash {
+  --ink: #0f1c14;
+  --muted: #5c6b61;
+  --paper: #f3f6f1;
+  --panel: #ffffffcc;
+  --line: #c5d2c8;
+  --yes: #0f7a4a;
+  --no: #8a3b1d;
+  --accent: #1b6b4a;
+  min-height: 100vh;
+  padding: 2rem clamp(1rem, 4vw, 3rem) 3rem;
+  color: var(--ink);
+  background:
+    radial-gradient(1200px 500px at 10% -10%, #d7ecdf 0%, transparent 55%),
+    radial-gradient(900px 400px at 100% 0%, #e8efe4 0%, transparent 50%),
+    linear-gradient(180deg, #eef3ec 0%, var(--paper) 40%, #e6ebe3 100%);
+  font-family: "IBM Plex Sans", "Segoe UI", sans-serif;
+}
+
+.kmw-brand {
+  margin: 0;
+  font-family: "Fraunces", Georgia, serif;
+  font-size: clamp(1.8rem, 4vw, 2.6rem);
+  letter-spacing: -0.03em;
+  color: var(--accent);
+}
+
+.kmw-dash h1 {
+  margin: 0.35rem 0 0.5rem;
+  font-size: clamp(1.15rem, 2.4vw, 1.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.kmw-lede {
+  margin: 0;
+  max-width: 38rem;
+  color: var(--muted);
+  line-height: 1.45;
+}
+
+.kmw-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1.25rem;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 1.25rem;
+}
+
+.kmw-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.kmw-actions button,
+.kmw-chat {
+  appearance: none;
+  border: 1px solid var(--ink);
+  background: var(--ink);
+  color: #f7faf7;
+  padding: 0.55rem 0.9rem;
+  border-radius: 0.4rem;
+  font: inherit;
+  font-size: 0.92rem;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.kmw-actions button:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.kmw-chat {
+  background: transparent;
+  color: var(--ink);
+}
+
+.kmw-toggle {
+  display: flex;
+  gap: 0.4rem;
+  align-items: center;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.kmw-meta,
+.kmw-disclaimer,
+.kmw-error {
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
+.kmw-error {
+  color: #9b1c1c;
+}
+
+.kmw-table-wrap {
+  margin-top: 0.75rem;
+  overflow: auto;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: var(--panel);
+  backdrop-filter: blur(8px);
+}
+
+.kmw-table-wrap table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.kmw-table-wrap th,
+.kmw-table-wrap td {
+  padding: 0.85rem 1rem;
+  text-align: left;
+  border-bottom: 1px solid var(--line);
+  vertical-align: top;
+}
+
+.kmw-table-wrap th {
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  background: #f7faf7;
+}
+
+.kmw-table-wrap tr:last-child td {
+  border-bottom: none;
+}
+
+.kmw-prob {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.kmw-profit {
+  color: var(--yes);
+  font-variant-numeric: tabular-nums;
+}
+
+.kmw-side {
+  display: inline-block;
+  min-width: 2.6rem;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.kmw-side-yes {
+  color: var(--yes);
+}
+
+.kmw-side-no {
+  color: var(--no);
+}
+
+.kmw-table-wrap a {
+  color: var(--ink);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.kmw-ticker {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--muted);
+  font-family: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+.kmw-disclaimer {
+  margin-top: 1rem;
+}
+
+@media (max-width: 720px) {
+  .kmw-table-wrap th:nth-child(5),
+  .kmw-table-wrap td:nth-child(5),
+  .kmw-table-wrap th:nth-child(6),
+  .kmw-table-wrap td:nth-child(6) {
+    display: none;
+  }
+}

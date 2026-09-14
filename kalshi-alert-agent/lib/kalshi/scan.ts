@@ -84,8 +84,52 @@ function titleFor(market: KalshiMarket): string {
   );
 }
 
-function kalshiMarketUrl(ticker: string): string {
-  return `https://kalshi.com/markets/${encodeURIComponent(ticker.toLowerCase())}`;
+const seriesTitleCache = new Map<string, { expiresAt: number; title: string }>();
+
+function slugifyTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+/**
+ * Kalshi UI routes are event pages, not bare market tickers:
+ * `/markets/{series}/{series-slug}/{event_ticker}?op_market_ticker={market}`
+ */
+export function kalshiMarketUrl(
+  market: KalshiMarket,
+  seriesTitle?: string | null,
+): string {
+  const series = seriesTickerFromMarket(market).toLowerCase();
+  const event = (market.event_ticker || market.ticker).toLowerCase();
+  const slug = seriesTitle?.trim()
+    ? slugifyTitle(seriesTitle)
+    : series;
+  const path = `https://kalshi.com/markets/${series}/${slug}/${event}`;
+  return `${path}?op_market_ticker=${encodeURIComponent(market.ticker)}`;
+}
+
+async function fetchSeriesTitle(seriesTicker: string): Promise<string | null> {
+  const cached = seriesTitleCache.get(seriesTicker);
+  if (cached && cached.expiresAt > Date.now()) return cached.title;
+
+  try {
+    const url = new URL(`${KALSHI_API_BASE}/series/${seriesTicker}`);
+    const json = (await fetchKalshiJson(url)) as {
+      series?: { title?: string };
+    };
+    const title = json.series?.title?.trim() || null;
+    if (title) {
+      seriesTitleCache.set(seriesTicker, {
+        expiresAt: Date.now() + Math.max(CACHE_TTL_MS, 600_000),
+        title,
+      });
+    }
+    return title;
+  } catch {
+    return null;
+  }
 }
 
 /** Score favors higher historical win rate, then market ask. */
@@ -232,6 +276,7 @@ export function collectRoiCandidates(
 function toOpportunity(
   candidate: Candidate,
   history: HistoricalWinEstimate,
+  seriesTitle?: string | null,
 ): MoneyOpportunity {
   const { market, side, ask, bid, profitIfWin, roiMultiple } = candidate;
   return {
@@ -253,7 +298,7 @@ function toOpportunity(
     volume24h: dollars(market.volume_24h_fp),
     liquidity: dollars(market.liquidity_dollars),
     closeTime: market.close_time ?? null,
-    kalshiUrl: kalshiMarketUrl(market.ticker),
+    kalshiUrl: kalshiMarketUrl(market, seriesTitle),
     moneyScore:
       Math.round(moneyScore(history.winRate, ask, profitIfWin) * 1000) / 1000,
   };
@@ -281,12 +326,15 @@ export async function rankMoneyOpportunitiesWithHistory(
     Awaited<ReturnType<typeof fetchSeriesHistory>>
   >();
 
+  const seriesTitles = new Map<string, string | null>();
+
   for (const seriesTicker of seriesNeeded) {
     try {
       historyBySeries.set(seriesTicker, await fetchSeriesHistory(seriesTicker));
     } catch {
       historyBySeries.set(seriesTicker, []);
     }
+    seriesTitles.set(seriesTicker, await fetchSeriesTitle(seriesTicker));
     await sleep(50);
   }
 
@@ -304,7 +352,9 @@ export async function rankMoneyOpportunitiesWithHistory(
     if (estimate.samples < params.minHistoricalSamples) continue;
     if (estimate.winRate + 1e-12 < params.minHistoricalWinRate) continue;
 
-    opportunities.push(toOpportunity(candidate, estimate));
+    opportunities.push(
+      toOpportunity(candidate, estimate, seriesTitles.get(seriesTicker)),
+    );
   }
 
   opportunities.sort((a, b) => {

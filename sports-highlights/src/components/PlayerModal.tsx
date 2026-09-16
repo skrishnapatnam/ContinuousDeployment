@@ -141,12 +141,26 @@ export function PlayerModal({ highlight, onClose }: Props) {
               setUsingApi(true);
               e.target.playVideo();
               const chosen = preferHighestQuality(e.target);
-              setQuality(chosen ?? e.target.getPlaybackQuality?.() ?? "auto");
+              const reported = e.target.getPlaybackQuality?.();
+              const label =
+                chosen && chosen !== "unknown"
+                  ? chosen
+                  : reported && reported !== "unknown"
+                    ? reported
+                    : "adaptive HD";
+              setQuality(label);
               // Retry once after buffers start — levels often appear after play begins.
               window.setTimeout(() => {
                 if (cancelled) return;
                 const again = preferHighestQuality(e.target);
-                if (again) setQuality(again);
+                const againReported = e.target.getPlaybackQuality?.();
+                const next =
+                  again && again !== "unknown"
+                    ? again
+                    : againReported && againReported !== "unknown"
+                      ? againReported
+                      : null;
+                if (next) setQuality(next);
               }, 1200);
             },
             onError: (e) => {

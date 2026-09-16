@@ -11,8 +11,8 @@ type RegionOption = {
 const REGIONS: RegionOption[] = [
   {
     code: "auto",
-    label: "Detect from my browser",
-    note: "We’ll use your browser locale as a soft hint only — never to bypass rights checks.",
+    label: "Browser locale",
+    note: "We use your browser locale as a soft hint only — never to bypass rights checks.",
   },
   {
     code: "US",
@@ -41,7 +41,7 @@ const REGIONS: RegionOption[] = [
   },
   {
     code: "OTHER",
-    label: "Other / I’m not sure",
+    label: "Other",
     note: "Open each clip on the publisher’s page — they enforce the correct country license.",
   },
 ];
@@ -75,27 +75,35 @@ export function RegionCompliance() {
       </div>
 
       <div className="compliance-grid">
-        <label className="region-picker">
-          <span>Where are you watching from?</span>
-          <select
-            value={choice}
-            onChange={(e) => setChoice(e.target.value)}
-            aria-describedby="region-guidance"
-          >
+        <div className="region-picker">
+          <span id="region-label">Where are you watching from?</span>
+          <div className="region-buttons" role="group" aria-labelledby="region-label">
             {REGIONS.map((r) => (
-              <option key={r.code} value={r.code}>
+              <button
+                key={r.code}
+                type="button"
+                className={`region-btn ${choice === r.code ? "is-active" : ""}`}
+                aria-pressed={choice === r.code}
+                onClick={() => setChoice(r.code)}
+              >
                 {r.label}
-              </option>
+              </button>
             ))}
-          </select>
-        </label>
+          </div>
+        </div>
 
         <div className="compliance-card" id="region-guidance">
           <h3>Local guidance</h3>
           <p>{selected.note}</p>
           <ul>
-            <li>If an embed says unavailable, use <strong>Open on source</strong> or a local licensed app.</li>
-            <li>Quality and audio come from the publisher’s stream (adaptive HD) — we don’t alter them.</li>
+            <li>
+              If an embed says unavailable, use <strong>Open on source</strong> or a local licensed
+              app.
+            </li>
+            <li>
+              Quality and audio come from the publisher&apos;s stream (adaptive HD) — we don&apos;t
+              alter them.
+            </li>
             <li>
               VPNs that hide location to unlock blocked sports rights can breach license terms and,
               in some places, local law. PlayTape will not integrate that.

@@ -34,4 +34,8 @@ Returns JSON with normalized highlight metadata and embed URLs.
 
 ## Legal note
 
-Videos are not re-hosted. The app links and embeds publisher content via YouTube (and optionally ScoreBat). Rights remain with each rights holder.
+Videos are not re-hosted, downloaded, AI-upscaled, or re-encoded. The app links and embeds publisher content via YouTube (and optionally ScoreBat). Playback uses YouTube’s adaptive stream (highest quality and original audio available for the viewer’s connection and region).
+
+**Territorial rights:** Sports clips are licensed by country. If an embed is unavailable where you are, use the official source link or a locally licensed broadcaster/app. PlayTape does **not** integrate VPNs or other tools to bypass geo-blocks — that can violate publisher licenses and local law.
+
+Content rights remain with each rights holder.

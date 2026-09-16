@@ -120,7 +120,7 @@ export async function fetchChannelHighlights(
         publishedAt,
         thumbnail,
         videoId,
-        embedUrl: `https://www.youtube.com/embed/${videoId}`,
+        embedUrl: `https://www.youtube-nocookie.com/embed/${videoId}`,
         watchUrl: `https://www.youtube.com/watch?v=${videoId}`,
         sourceId: source.id,
         sourceName: source.name,

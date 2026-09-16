@@ -1,4 +1,5 @@
 import { HighlightsExplorer } from "@/components/HighlightsExplorer";
+import { RegionCompliance } from "@/components/RegionCompliance";
 import { SourcesStrip } from "@/components/SourcesStrip";
 import { getHighlights } from "@/lib/highlights";
 
@@ -29,8 +30,8 @@ export default async function HomePage() {
               <a className="cta-primary" href="#feed">
                 Watch highlights
               </a>
-              <a className="cta-ghost" href="#sources">
-                See sources
+              <a className="cta-ghost" href="#compliance">
+                Rights &amp; regions
               </a>
             </div>
           </div>
@@ -40,16 +41,20 @@ export default async function HomePage() {
           <SourcesStrip />
         </div>
 
+        <RegionCompliance />
+
         <HighlightsExplorer initial={initial} />
       </main>
 
       <footer className="site-footer">
         <p>
           <strong>PlayTape</strong> aggregates publicly available YouTube channel
-          RSS feeds and plays videos through YouTube&apos;s official embed player.
-          Optional ScoreBat support uses their licensed free feed when{" "}
+          RSS feeds and plays videos through YouTube&apos;s official embed player
+          at the highest quality the publisher streams for your connection and
+          region. We do not download, AI-enhance, re-encode, or VPN-reroute
+          content. Optional ScoreBat support uses their licensed free feed when{" "}
           <code>SCOREBAT_TOKEN</code> is set. Content rights remain with each
-          publisher.
+          publisher — follow your country&apos;s licensing rules.
         </p>
       </footer>
     </div>

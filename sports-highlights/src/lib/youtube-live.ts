@@ -43,11 +43,11 @@ export async function fetchChannelLive(
     if (!res.ok) return null;
     const html = await res.text();
 
-    const isLive =
-      /"isLiveNow"\s*:\s*true/.test(html) ||
-      (/\"isLive\"\s*:\s*true/.test(html) &&
-        /"isLiveContent"\s*:\s*true/.test(html)) ||
-      /itemprop="isLiveBroadcast"\s+content="True"/i.test(html);
+    const hasLiveNow = /"isLiveNow"\s*:\s*true/.test(html);
+    const hasLiveContent = /"isLiveContent"\s*:\s*true/.test(html);
+    const hasLiveFlag = /"isLive"\s*:\s*true/.test(html);
+    const hasLiveMeta = /itemprop="isLiveBroadcast"\s+content="True"/i.test(html);
+    const isLive = hasLiveNow || hasLiveMeta || (hasLiveFlag && hasLiveContent) || hasLiveFlag;
 
     if (!isLive) return null;
 

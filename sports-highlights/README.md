@@ -28,9 +28,21 @@ Without it, soccer highlights still load from official YouTube channels (Premier
 
 ## API
 
-`GET /api/highlights?sport=soccer&q=goal&limit=48`
+`GET /api/highlights?sport=soccer&q=goal&limit=48` — highlight metadata + embed URLs.
 
-Returns JSON with normalized highlight metadata and embed URLs.
+`GET /api/live?sport=cricket` — official public lives currently on air + country watch guides.
+
+## Live sports (legal)
+
+There is **no single free live embed that works worldwide**. Rights are sold by country.
+
+PlayTape’s legal live approach:
+
+1. **Official public lives** — detect free live broadcasts on curated league YouTube channels and embed them when the publisher allows it (`/api/live`).
+2. **Country watch guide** — deep-link users to licensed platforms (ESPN+, Sky, DAZN, JioCinema, Kayo, etc.) for their region.
+3. **Optional ScoreBat** — with a paid ScoreBat token, soccer live embeds from official public sources can be added later; still not a paywall bypass.
+
+Never use unauthorized IPTV, scraped mirrors, or VPNs to unlock another country’s exclusive window.
 
 ## Legal note
 

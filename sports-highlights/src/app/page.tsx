@@ -1,12 +1,17 @@
 import { HighlightsExplorer } from "@/components/HighlightsExplorer";
+import { LiveSports } from "@/components/LiveSports";
 import { RegionCompliance } from "@/components/RegionCompliance";
 import { SourcesStrip } from "@/components/SourcesStrip";
 import { getHighlights } from "@/lib/highlights";
+import { getLive } from "@/lib/live";
 
-export const revalidate = 900;
+export const revalidate = 120;
 
 export default async function HomePage() {
-  const initial = await getHighlights({ sport: "all", limit: 72 });
+  const [initial, live] = await Promise.all([
+    getHighlights({ sport: "all", limit: 72 }),
+    getLive({ sport: "all" }),
+  ]);
 
   return (
     <div className="site-shell">
@@ -23,15 +28,15 @@ export default async function HomePage() {
           <div className="hero-copy">
             <h1 className="hero-brand">PlayTape</h1>
             <p className="hero-line">
-              Multi-sport highlights straight from official league and broadcaster
-              feeds — soccer, cricket, NBA, football, baseball, and more.
+              Highlights plus legal live paths — official free streams when
+              leagues publish them, and licensed platforms for every country.
             </p>
             <div className="cta-row">
-              <a className="cta-primary" href="#feed">
-                Watch highlights
+              <a className="cta-primary" href="#live">
+                Live &amp; watch legally
               </a>
-              <a className="cta-ghost" href="#compliance">
-                Rights &amp; regions
+              <a className="cta-ghost" href="#feed">
+                Browse highlights
               </a>
             </div>
           </div>
@@ -41,6 +46,8 @@ export default async function HomePage() {
           <SourcesStrip />
         </div>
 
+        <LiveSports initial={live} />
+
         <RegionCompliance />
 
         <HighlightsExplorer initial={initial} />
@@ -49,12 +56,12 @@ export default async function HomePage() {
       <footer className="site-footer">
         <p>
           <strong>PlayTape</strong> aggregates publicly available YouTube channel
-          RSS feeds and plays videos through YouTube&apos;s official embed player
-          at the highest quality the publisher streams for your connection and
-          region. We do not download, AI-enhance, re-encode, or VPN-reroute
-          content. Optional ScoreBat support uses their licensed free feed when{" "}
-          <code>SCOREBAT_TOKEN</code> is set. Content rights remain with each
-          publisher — follow your country&apos;s licensing rules.
+          RSS feeds and official public live pages, and plays them through
+          YouTube&apos;s embed player. We do not download, AI-enhance, re-encode,
+          scrape paywalled streams, or VPN-reroute content. Live exclusives must
+          be watched on your country&apos;s licensed platform. Optional ScoreBat
+          support uses their licensed feed when <code>SCOREBAT_TOKEN</code> is
+          set. Content rights remain with each publisher.
         </p>
       </footer>
     </div>

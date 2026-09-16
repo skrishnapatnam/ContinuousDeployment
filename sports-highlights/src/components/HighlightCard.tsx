@@ -12,10 +12,12 @@ type Props = {
 function formatWhen(iso: string): string {
   const date = new Date(iso);
   if (Number.isNaN(date.getTime())) return "";
-  return new Intl.RelativeTimeFormat("en", { numeric: "auto" }).format(
-    Math.round((date.getTime() - Date.now()) / (1000 * 60 * 60 * 24)),
-    "day",
-  );
+  const deltaSec = Math.round((date.getTime() - Date.now()) / 1000);
+  const rtf = new Intl.RelativeTimeFormat("en", { numeric: "auto" });
+  const abs = Math.abs(deltaSec);
+  if (abs < 60 * 60) return rtf.format(Math.round(deltaSec / 60), "minute");
+  if (abs < 60 * 60 * 24) return rtf.format(Math.round(deltaSec / 3600), "hour");
+  return rtf.format(Math.round(deltaSec / 86400), "day");
 }
 
 export function HighlightCard({ highlight, index, onOpen }: Props) {

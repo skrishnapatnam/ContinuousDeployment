@@ -57,20 +57,40 @@ export async function fetchChannelHighlights(
   limit = 12,
 ): Promise<Highlight[]> {
   const url = `https://www.youtube.com/feeds/videos.xml?channel_id=${source.channelId}`;
-  const res = await fetch(url, {
-    next: { revalidate: 900 },
-    headers: {
-      Accept: "application/atom+xml,application/xml,text/xml",
-      "User-Agent": "PlayTape/1.0 (legal highlights aggregator; +https://localhost)",
-    },
-  });
 
-  if (!res.ok) {
-    console.warn(`YouTube RSS failed for ${source.id}: ${res.status}`);
-    return [];
+  let xml = "";
+  for (let attempt = 0; attempt < 3; attempt++) {
+    try {
+      const res = await fetch(url, {
+        next: { revalidate: 900 },
+        headers: {
+          Accept: "application/atom+xml,application/xml,text/xml",
+          "User-Agent":
+            "Mozilla/5.0 (compatible; PlayTape/1.0; +https://github.com/playtape)",
+        },
+      });
+      if (!res.ok) {
+        if (attempt < 2) {
+          await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+          continue;
+        }
+        console.warn(`YouTube RSS failed for ${source.id}: ${res.status}`);
+        return [];
+      }
+      xml = await res.text();
+      break;
+    } catch (err) {
+      if (attempt < 2) {
+        await new Promise((r) => setTimeout(r, 200 * (attempt + 1)));
+        continue;
+      }
+      console.warn(`YouTube RSS error for ${source.id}`, err);
+      return [];
+    }
   }
 
-  const xml = await res.text();
+  if (!xml) return [];
+
   const parsed = parser.parse(xml);
   const feed = parsed?.feed;
   if (!feed) return [];

@@ -81,6 +81,7 @@ export const SOURCES: HighlightSource[] = [
     sport: "nba",
     channelId: "UCqQo7ewe87aYAe7ub5UqXMw",
     preferKeywords: ["highlight", "best", "top"],
+    maxItems: 3,
   },
   // American football
   {
@@ -159,6 +160,7 @@ export const SOURCES: HighlightSource[] = [
     sport: "nba",
     channelId: "UCiWLfSweyRNmLpgEHekhoAg",
     preferKeywords: ["highlight", "top", "best", "plays"],
+    maxItems: 4,
   },
   {
     id: "bleacher-report",
@@ -166,6 +168,7 @@ export const SOURCES: HighlightSource[] = [
     sport: "nba",
     channelId: "UC9-OpMMVoNP5o10_Iyq7Ndw",
     preferKeywords: ["highlight", "top", "best"],
+    maxItems: 3,
   },
 ];
 

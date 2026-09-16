@@ -60,6 +60,26 @@ async function fetchScoreBatSoccer(): Promise<Highlight[]> {
   }
 }
 
+async function mapPool<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let next = 0;
+
+  async function worker() {
+    while (next < items.length) {
+      const index = next++;
+      results[index] = await fn(items[index]);
+    }
+  }
+
+  const workers = Array.from({ length: Math.min(concurrency, items.length) }, () => worker());
+  await Promise.all(workers);
+  return results;
+}
+
 export async function getHighlights(options: {
   sport?: string | null;
   q?: string | null;
@@ -69,13 +89,17 @@ export async function getHighlights(options: {
     ? (options.sport as SportId)
     : "all";
   const q = (options.q ?? "").trim().toLowerCase();
-  const perSource = sport === "all" ? 6 : 14;
+  const perSourceDefault = sport === "all" ? 6 : 14;
   const limit = Math.min(Math.max(options.limit ?? 72, 12), 120);
 
   const sources = sourcesForSport(sport);
-  const batches = await Promise.all(
-    sources.map((source) => fetchChannelHighlights(source, perSource)),
-  );
+  const batches = await mapPool(sources, 6, (source) => {
+    const capped =
+      sport === "all" && source.maxItems
+        ? Math.min(perSourceDefault, source.maxItems)
+        : perSourceDefault;
+    return fetchChannelHighlights(source, capped);
+  });
 
   let highlights = batches.flat();
 
@@ -104,7 +128,28 @@ export async function getHighlights(options: {
   }
 
   highlights.sort((a, b) => Date.parse(b.publishedAt) - Date.parse(a.publishedAt));
-  highlights = highlights.slice(0, limit);
+
+  // Fair mix for the "all" feed so quieter sports aren't crowded out.
+  if (sport === "all") {
+    const bySport = new Map<string, Highlight[]>();
+    for (const h of highlights) {
+      const list = bySport.get(h.sport) ?? [];
+      list.push(h);
+      bySport.set(h.sport, list);
+    }
+    const fair: Highlight[] = [];
+    const perSportFloor = 3;
+    for (const list of bySport.values()) {
+      fair.push(...list.slice(0, perSportFloor));
+    }
+    const fairIds = new Set(fair.map((h) => h.id));
+    for (const h of highlights) {
+      if (!fairIds.has(h.id)) fair.push(h);
+    }
+    highlights = fair.slice(0, limit);
+  } else {
+    highlights = highlights.slice(0, limit);
+  }
 
   const counts = new Map<SportId, number>();
   for (const h of highlights) {

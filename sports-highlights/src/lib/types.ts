@@ -19,6 +19,8 @@ export type HighlightSource = {
   channelId: string;
   /** Optional: prefer titles matching these (case-insensitive). Empty = keep recent uploads. */
   preferKeywords?: string[];
+  /** Cap how many clips this source contributes to the mixed feed. */
+  maxItems?: number;
 };
 
 export type Highlight = {
